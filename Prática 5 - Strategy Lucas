@@ -1,132 +1,111 @@
-public interface Adicional {
-    String getDescricao();
-    double custo();
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+interface EstrategiaOrdenacao {
+    void ordenar(List<Integer> numeros);
 }
 
-public class Acai implements Adicional {
-    private Tamanho tamanho;
-
-    public Acai(Tamanho tamanho) {
-        this.tamanho = tamanho;
-    }
-
+class OrdenacaoBubbleSort implements EstrategiaOrdenacao {
     @Override
-    public String getDescricao() {
-        return "Açaí " + tamanho;
-    }
-
-    @Override
-    public double custo() {
-        switch (tamanho) {
-            case PEQUENO: return 5.00;
-            case MEDIO: return 7.00;
-            case GRANDE: return 9.00;
-            default: return 0;
+    public void ordenar(List<Integer> numeros) {
+        int n = numeros.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (numeros.get(j) > numeros.get(j + 1)) {
+                    int temp = numeros.get(j);
+                    numeros.set(j, numeros.get(j + 1));
+                    numeros.set(j + 1, temp);
+                }
+            }
         }
     }
-
-    public Tamanho getTamanho() {
-        return tamanho;
-    }
 }
 
-public abstract class BaseDecorator implements Adicional {
-    protected Adicional wrappee;
-
-    public BaseDecorator(Adicional wrappee) {
-        this.wrappee = wrappee;
-    }
-
+class OrdenacaoSelectionSort implements EstrategiaOrdenacao {
     @Override
-    public String getDescricao() {
-        return wrappee.getDescricao();
-    }
-
-    @Override
-    public double custo() {
-        return wrappee.custo();
-    }
-}
-
-public class Morango extends BaseDecorator {
-    public Morango(Adicional wrappee) {
-        super(wrappee);
-    }
-
-    @Override
-    public String getDescricao() {
-        return wrappee.getDescricao() + ", Morango";
-    }
-
-    @Override
-    public double custo() {
-        double custoAdicional = 0;
-        switch (((Acai) wrappee).getTamanho()) {
-            case PEQUENO: custoAdicional = 1.00; break;
-            case MEDIO: custoAdicional = 1.50; break;
-            case GRANDE: custoAdicional = 2.00; break;
+    public void ordenar(List<Integer> numeros) {
+        int n = numeros.size();
+        for (int i = 0; i < n - 1; i++) {
+            int minIndex = i;
+            for (int j = i + 1; j < n; j++) {
+                if (numeros.get(j) < numeros.get(minIndex)) {
+                    minIndex = j;
+                }
+            }
+            int temp = numeros.get(minIndex);
+            numeros.set(minIndex, numeros.get(i));
+            numeros.set(i, temp);
         }
-        return wrappee.custo() + custoAdicional;
     }
 }
 
-public class Banana extends BaseDecorator {
-    public Banana(Adicional wrappee) {
-        super(wrappee);
-    }
-
+class OrdenacaoInsertionSort implements EstrategiaOrdenacao {
     @Override
-    public String getDescricao() {
-        return wrappee.getDescricao() + ", Banana";
-    }
-
-    @Override
-    public double custo() {
-        double custoAdicional = 0;
-        switch (((Acai) wrappee).getTamanho()) {
-            case PEQUENO: custoAdicional = 0.80; break;
-            case MEDIO: custoAdicional = 1.20; break;
-            case GRANDE: custoAdicional = 1.60; break;
+    public void ordenar(List<Integer> numeros) {
+        int n = numeros.size();
+        for (int i = 1; i < n; i++) {
+            int key = numeros.get(i);
+            int j = i - 1;
+            while (j >= 0 && numeros.get(j) > key) {
+                numeros.set(j + 1, numeros.get(j));
+                j--;
+            }
+            numeros.set(j + 1, key);
         }
-        return wrappee.custo() + custoAdicional;
     }
 }
 
-public class LeiteCondensado extends BaseDecorator {
-    public LeiteCondensado(Adicional wrappee) {
-        super(wrappee);
+class ContextoDeOrdenacao {
+    private EstrategiaOrdenacao estrategia;
+
+    public void setEstrategia(EstrategiaOrdenacao estrategia) {
+        this.estrategia = estrategia;
     }
 
-    @Override
-    public String getDescricao() {
-        return wrappee.getDescricao() + ", Leite Condensado";
-    }
-
-    @Override
-    public double custo() {
-        double custoAdicional = 0;
-        switch (((Acai) wrappee).getTamanho()) {
-            case PEQUENO: custoAdicional = 1.50; break;
-            case MEDIO: custoAdicional = 2.00; break;
-            case GRANDE: custoAdicional = 2.50; break;
+    public void executarOrdenacao(List<Integer> numeros) {
+        if (estrategia != null) {
+            estrategia.ordenar(numeros);
+        } else {
+            System.out.println("Estratégia de ordenação não definida.");
         }
-        return wrappee.custo() + custoAdicional;
     }
 }
 
-public enum Tamanho {
-    PEQUENO, MEDIO, GRANDE;
-}
-
-public class TestaDecorator {
+public class Principal {
     public static void main(String[] args) {
-        Adicional acaiSimples = new Acai(Tamanho.MEDIO);
-        System.out.println(acaiSimples.getDescricao() + " R$ " + acaiSimples.custo());
+        Scanner scanner = new Scanner(System.in);
+        ContextoDeOrdenacao contexto = new ContextoDeOrdenacao();
+        List<Integer> numeros = new ArrayList<>();
 
-        Adicional acaiComMorango = new Morango(acaiSimples);
-        System.out.println(acaiComMorango.getDescricao() + " R$ " + acaiComMorango.custo());
+        System.out.println("Digite números para ordenar (digite 'fim' para finalizar):");
+        while (scanner.hasNextInt()) {
+            numeros.add(scanner.nextInt());
+        }
+        scanner.nextLine();
 
-        Adicional acaiComMorangoLeiteBanana = new Banana(new LeiteCondensado(new Morango(acaiSimples)));
-        System.out.println(acaiComMorangoLeiteBanana.getDescricao() + " R$ " + acaiComMorangoLeiteBanana.custo());
+        System.out.println("Escolha a estratégia de ordenação:");
+        System.out.println("1. Bubble Sort");
+        System.out.println("2. Selection Sort");
+        System.out.println("3. Insertion Sort");
+        int escolha = scanner.nextInt();
+
+        switch (escolha) {
+            case 1:
+                contexto.setEstrategia(new OrdenacaoBubbleSort());
+                break;
+            case 2:
+                contexto.setEstrategia(new OrdenacaoSelectionSort());
+                break;
+            case 3:
+                contexto.setEstrategia(new OrdenacaoInsertionSort());
+                break;
+            default:
+                System.out.println("Opção inválida.");
+                return;
+        }
+
+        contexto.executarOrdenacao(numeros);
+        System.out.println("Lista ordenada: " + numeros);
     }
 }
